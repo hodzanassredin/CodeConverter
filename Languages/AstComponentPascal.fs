@@ -12,8 +12,13 @@ module AstCP =
     //    | SHORTREAL// of System.Single
     //    | REAL// of System.Double
     //    | SET// of byte//max 31
-    type OneOrMany<'a> = | One of 'a
-                         | Many of 'a * OneOrMany<'a>
+    type OneOrMany<'a> = 'a * 'a list
+
+    let rec iter f fb ((h,t):OneOrMany<_>) =
+        f h
+        List.iter (fun x -> fb()
+                            f x) t
+        
     type ident = string
     type number = int
     type character = Char
@@ -110,7 +115,9 @@ module AstCP =
         | TYPE of TypeDecl list 
         | VAR of VarDecl list
     and DeclSeq2 = Proc of ProcDecl | Forward of ForwardDecl 
-    and DeclSeq = DeclSeq1 list	* DeclSeq2 list
-    and ImportList = ident option * ident * (ident option * ident) list
-    and Module = ident * ImportList option * DeclSeq * StatementSeq option * StatementSeq option * ident
+    and DeclSeq = (DeclSeq1 list) * DeclSeq2 list
+    and ImportList = (ident option * ident) OneOrMany
+    and Module = ident * ImportList option * DeclSeq * StatementSeq option * StatementSeq option
+
+
 
