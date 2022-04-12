@@ -96,15 +96,15 @@ module AstCP =
         | ARRAY of (ConstExpr OneOrMany) option * Type
         | RECORD of RecordPrefix option * Qualident option * FieldList OneOrMany
         | POINTER of Type
-        | PROCEDURE of FormalPars
+        | PROCEDURE of FormalPars option
     and RecieverPrefix = VAR | IN
     and Receiver = RecieverPrefix option * ident * ident
     and FPSectionPrefix = VAR | IN | OUT
     and FPSection = FPSectionPrefix option * ident OneOrMany * Type
     and FormalPars = FPSection OneOrMany option * Type option
     and ForwardDecl = Receiver option * IdentDef * FormalPars option * MethAttributes
-    and ProcKind = ABSTRACT | EMPTY | EXTENSIBLE
-    and ProcNew = bool
+    and ProcKind = Abstract | Empty | Extensible
+    and ProcNew = unit
     and MethAttributes = ProcNew option * ProcKind option
     and ProcDecl = Receiver option * IdentDef * FormalPars option * MethAttributes * (DeclSeq * StatementSeq option * ident) option
     and VarDecl = IdentList * Type
