@@ -1,5 +1,5 @@
 ﻿namespace Languages
 
-module Say =
+module CPINterpreter =
     let hello name =
         printfn "Hello %s" name

@@ -10,4 +10,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Languages\Languages.fsproj" />
+  </ItemGroup>
+
 </Project>

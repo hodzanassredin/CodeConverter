@@ -1,6 +1,6 @@
 ﻿namespace Languages
 
-module AstCP =
+module CPAst =
     //type SimpleType =
     //    | BOOLEAN// of bool
     //    | SHORTCHAR// of byte
