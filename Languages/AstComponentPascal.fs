@@ -78,35 +78,35 @@ module AstCP =
     and Statement = StatementInt option
     and StatementInt = 
         | Assignment of Designator * Expr
-        | Fn of Designator * ExprList
-        | IF of Expr * StatementSeq * (Expr * StatementSeq) list * StatementSeq option
-        | CASE of Expr * Case OneOrMany * StatementSeq option
+        | Fn of Designator * ExprList option option
+        | IF of (Expr * StatementSeq) * ((Expr * StatementSeq) list * StatementSeq option)
+        | CASE of Expr * (Case OneOrMany * StatementSeq option)
         | WHILE of Expr * StatementSeq
         | REPEAT of StatementSeq * Expr
-        | FOR of ident * Expr * Expr * ConstExpr option * StatementSeq
+        | FOR of ident * (Expr * (Expr * (ConstExpr option * StatementSeq)))
         | LOOP of StatementSeq
-        | WITH of (Guard * StatementSeq) option * (Guard * StatementSeq) list * StatementSeq option
+        | WITH of (Guard * StatementSeq) option * (((Guard * StatementSeq) option) list * StatementSeq option)
         | EXIT
-        | RETURN of Expr
+        | RETURN of (Expr option)
     and StatementSeq = Statement OneOrMany
     and FieldList = (IdentList * Type) option
     and RecordPrefix = ABSTRACT | EXTENSIBLE | LIMITED
     and Type = 
         | Simple of Qualident
         | ARRAY of (ConstExpr OneOrMany) option * Type
-        | RECORD of RecordPrefix option * Qualident option * FieldList OneOrMany
+        | RECORD of RecordPrefix option * (Qualident option * FieldList OneOrMany)
         | POINTER of Type
         | PROCEDURE of FormalPars option
     and RecieverPrefix = VAR | IN
-    and Receiver = RecieverPrefix option * ident * ident
+    and Receiver = RecieverPrefix option * (ident * ident)
     and FPSectionPrefix = VAR | IN | OUT
-    and FPSection = FPSectionPrefix option * ident OneOrMany * Type
+    and FPSection = FPSectionPrefix option * (ident OneOrMany * Type)
     and FormalPars = FPSection OneOrMany option * Type option
-    and ForwardDecl = Receiver option * IdentDef * FormalPars option * MethAttributes
+    and ForwardDecl = Receiver option * (IdentDef * (FormalPars option * MethAttributes))
     and ProcKind = Abstract | Empty | Extensible
     and ProcNew = unit
     and MethAttributes = ProcNew option * ProcKind option
-    and ProcDecl = Receiver option * IdentDef * FormalPars option * MethAttributes * (DeclSeq * StatementSeq option * ident) option
+    and ProcDecl = Receiver option * IdentDef * FormalPars option * MethAttributes * (DeclSeq * (StatementSeq option * ident)) option
     and VarDecl = IdentList * Type
     and TypeDecl = IdentDef * Type
     and ConstDecl = IdentDef * ConstExpr
