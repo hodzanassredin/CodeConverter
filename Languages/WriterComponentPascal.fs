@@ -3,7 +3,10 @@
 module CPWriter =
 
     let p = printf "%s"
+    let writeNumber (n:AstCP.number) = printf "%d" n
+    let writeCharacter (n:AstCP.character) = printf "%A" n
     let inline (++) (f: 'a -> unit) (f2: 'b -> unit) (v,v2) : unit = f v; f2 v2
+    let inline (|+>) (arg: 'a * 'b) (f: 'a -> unit) : 'b = fst arg|> f; snd arg
     let inline (+<) (f: 'a -> unit) (s: string) v : unit = f v; p s
     let inline (+>) (s: string) f2 v : unit = p s; f2 v
     let optional f = Option.iter f
@@ -13,12 +16,12 @@ module CPWriter =
     let writeIdent(ast:AstCP.ident) = printf "%s" ast
 
     let writeImportList (ast: AstCP.ImportList) : unit = inOneOrManyList "," ("IMPORT " +> (optional (writeIdent +< ":=")) ++ writeIdent) ast
-    let rec writeIdentList(ast:AstCP.IdentList) = ()
-    and writeIdentDef(ast:AstCP.IdentDef) = ()
-    and writeConstExpr(ast:AstCP.ConstExpr) = ()
-    and writeQualident(ast:AstCP.Qualident) = ()
-    and writeFieldList(ast:AstCP.FieldList) = optional (writeIdentList +< ":" ++ writeType) ast
-    and writeType(ast:AstCP.Type) = 
+    let rec writeIdentList(ast:AstCP.IdentList) : unit = (inOneOrManyList "," writeIdentDef) ast
+    and writeIdentDef(ast:AstCP.IdentDef) : unit = (writeIdent ++ optional (fun x->match x with | AstCP.IdentType.Export-> p "*" | AstCP.IdentType.ReadOnlyOrImplementOnly -> p "-")) ast
+    and writeConstExpr(ast:AstCP.ConstExpr) : unit = writeExpr ast
+    and writeQualident(ast:AstCP.Qualident) : unit = (optional (writeIdent +< ".") ++ writeIdent) ast
+    and writeFieldList(ast:AstCP.FieldList) : unit = optional (writeIdentList +< ":" ++ writeType) ast
+    and writeType(ast:AstCP.Type) : unit = 
         match ast with 
         | AstCP.Type.Simple(qualident) -> writeQualident qualident
         | AstCP.Type.ARRAY(constExprOneOrManyOption, tp) -> ("ARRAY" +> (optional (inOneOrManyList "," writeConstExpr)) ++ ("OF" +> writeType)) (constExprOneOrManyOption, tp)
@@ -60,11 +63,63 @@ module CPWriter =
         (optional writeNew ++ optional writeKind) ast
     and writeForwardDecl(ast:AstCP.ForwardDecl) : unit = 
         (("PROCEDURE" + " ^ ") +> (optional writeReciever) ++ (writeIdentDef ++ ((optional writeFormalPars) ++ writeMethAttributes))) ast
-    and writeDesignator(ast:AstCP.Designator) : unit = ()
-    and writeExpr(ast:AstCP.Expr) : unit = ()
-    and writeExprList(ast:AstCP.ExprList) : unit = ()
-    and writeCase(ast:AstCP.Case) : unit = ()
-    and writeGuard(ast:AstCP.Guard) : unit = ()
+    and writeNullTerm(ast:AstCP.NullTerm) : unit = p "$"
+    and writeDesignatorOps(ast:AstCP.DesignatorOps) : unit = 
+        match ast with
+        | AstCP.DesignatorOps.Ident(i) -> ("." +> writeIdent) i
+        | AstCP.DesignatorOps.Index(a1,a2) -> ("[" +> writeExprList +<  "]") (a1,a2)
+        | AstCP.DesignatorOps.Ref ->  p "^" 
+        | AstCP.DesignatorOps.FnQ(q) -> ("("  +> writeQualident +<  ")") q
+        | AstCP.DesignatorOps.FnE(e) -> ("(" +> (optional writeExprList) +< ")") e
+    and writeDesignator(ast:AstCP.Designator) : unit = 
+        (writeQualident ++ (inList writeDesignatorOps ++ (optional writeNullTerm))) ast
+    and writeMulOp(ast:AstCP.MulOp) : unit = 
+        match ast with 
+        | AstCP.MulOp.Division -> p "/"
+        | AstCP.MulOp.MUL -> p "*"
+        | AstCP.MulOp.DIV -> p "DIV"
+        | AstCP.MulOp.MOD -> p "MOD"
+        | AstCP.MulOp.AND -> p "&"
+    and writeFactor(ast:AstCP.Factor) : unit = 
+        match ast with
+        | AstCP.Factor.Designator(d) -> writeDesignator d
+        | AstCP.Factor.Number(n) -> writeNumber n
+        | AstCP.Factor.Char(c) -> writeCharacter c
+        | AstCP.Factor.String(s) -> p s
+        | AstCP.Factor.NIL -> p "NIL"
+        | AstCP.Factor.Set(s) -> writeSet s
+        | AstCP.Factor.Expr(e) -> ("(" +> writeExpr +< ")") e
+        | AstCP.Factor.FactorF(f) -> (" ~ " +> writeFactor) f
+    and writeTerm(ast:AstCP.Term) : unit = (writeFactor ++ inList (writeMulOp ++ writeFactor)) ast
+    and writeAddOp(ast:AstCP.AddOp) : unit = 
+        match ast with 
+        | AstCP.AddOp.Plus -> p "+"
+        | AstCP.AddOp.Minus -> p "-"
+        | AstCP.AddOp.OR -> p "OR"
+    and writeSimpleExpr(ast:AstCP.SimpleExpr) : unit = 
+        let writePrefix pref =
+            match pref with 
+            | AstCP.SimpleExprPrefix.Plus -> p "+"
+            | AstCP.SimpleExprPrefix.Minus -> p "-"
+        (optional writePrefix ++ (writeTerm ++ inList (writeAddOp ++ writeTerm))) ast
+    and writeRelation(ast:AstCP.Relation) : unit =  
+        match ast with
+        | AstCP.Relation.Eq -> p "="
+        | AstCP.Relation.NotEq -> p "#"
+        | AstCP.Relation.More -> p ">"
+        | AstCP.Relation.MoreOrEq -> p ">="
+        | AstCP.Relation.Less -> p "<"
+        | AstCP.Relation.LessOrEq -> p "<="
+        | AstCP.Relation.IN -> p "IN"
+        | AstCP.Relation.IS -> p "IS"
+    and writeExpr(ast:AstCP.Expr) : unit = (writeSimpleExpr ++ optional (writeRelation ++ writeSimpleExpr)) ast
+    and writeExprList(ast:AstCP.ExprList) : unit = (inOneOrManyList "," writeExpr) ast
+    and writeElement(ast:AstCP.Element) : unit = (inOneOrManyList ".." writeExpr) ast
+    and writeSet(ast:AstCP.Set) : unit = ("{" +> optional (inOneOrManyList "," writeElement) +< "}") ast
+    and writeCaseLabels(ast:AstCP.CaseLabels) : unit = inOneOrManyList ".." writeConstExpr ast
+    and writeCase(ast:AstCP.Case) : unit = 
+        optional (inOneOrManyList "," writeCaseLabels +< ":" ++ writeStatementSeq) ast
+    and writeGuard(ast:AstCP.Guard) : unit = (writeQualident +< ":" ++ writeQualident) ast
     and writeStatementInt(ast:AstCP.StatementInt) : unit = 
         match ast with
         | AstCP.StatementInt.Assignment(f,s)-> (writeDesignator +< ":=" ++ writeExpr) (f,s)

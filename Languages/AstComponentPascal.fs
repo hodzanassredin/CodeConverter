@@ -31,13 +31,13 @@ module AstCP =
     type ExprList = Expr OneOrMany
     and NullTerm = bool
     and DesignatorOps = 
-        | Ident of Qualident
-        | Array of Qualident * ExprList
-        | Ref of Qualident
-        | Fn of Qualident * Qualident
-    and Designator = Qualident * DesignatorOps list * NullTerm option
+        | Ident of ident
+        | Index of ExprList
+        | Ref
+        | FnQ of Qualident
+        | FnE of (ExprList option)
+    and Designator = Qualident * (DesignatorOps list * NullTerm option)
     and MulOp = 
-        | Multiplication
         | Division
         | MUL
         | DIV
@@ -56,8 +56,8 @@ module AstCP =
         | LessOrEq
         | IN
         | IS
-    and Element = Expr * Expr option
-    and Set = Element list
+    and Element = (Expr OneOrMany)
+    and Set = (Element OneOrMany) option
     and Factor = 
         | Designator of Designator
         | Number of number
@@ -66,14 +66,14 @@ module AstCP =
         | NIL
         | Set of Set
         | Expr of Expr
-        | Factor of Factor
+        | FactorF of Factor
     and Term = Factor * (MulOp * Factor) list
     and SimpleExprPrefix = Plus | Minus
-    and SimpleExpr = SimpleExprPrefix * Term * (AddOp * Term) list
+    and SimpleExpr = (SimpleExprPrefix option) * (Term * (AddOp * Term) list)
     and Expr = SimpleExpr * (Relation * SimpleExpr) option
     and ConstExpr =  Expr
     and Guard = Qualident * Qualident
-    and CaseLabels = ConstExpr * ConstExpr option
+    and CaseLabels = ConstExpr OneOrMany
     and Case = (CaseLabels OneOrMany * StatementSeq) option
     and Statement = StatementInt option
     and StatementInt = 
