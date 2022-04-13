@@ -7,10 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="AstComponentPascal.fs" />
-    <Compile Include="InterpreterComponentPascal.fs" />
-    <Compile Include="ParserComponentPascal.fs" />
-    <Compile Include="WriterComponentPascal.fs" />
+    <Compile Include="Parsers.fs" />
+    <Compile Include="CPAst.fs" />
+    <Compile Include="CPINterpreter.fs" />
+    <Compile Include="CPParser.fs" />
+    <Compile Include="CPWriter.fs" />
   </ItemGroup>
 
 </Project>
