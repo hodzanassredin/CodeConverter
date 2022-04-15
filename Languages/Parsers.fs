@@ -495,4 +495,37 @@ module Parser =
         |> mapP resultToFloat
         <?> label
 
+    // ======================================
+    // Forward reference
+    // ======================================
+    
+    /// Create a forward reference
+    let createParserForwardedToRef<'a>() =
+    
+        let dummyParser : Parser<'a> =
+            let innerFn _ = failwith "unfixed forwarded parser"
+            {parseFn=innerFn; label="unknown"}
+    
+        // ref to placeholder Parser
+        let parserRef = ref dummyParser
+    
+        // wrapper Parser
+        let innerFn input =
+            // forward input to the placeholder
+            // (Note: "!" is the deferencing operator)
+            runOnInput !parserRef input
+        let wrapperParser = {parseFn=innerFn; label="unknown"}
+    
+        wrapperParser, parserRef
+    
+    
+    
+    // ======================================
+    // Utility function
+    // ======================================
+    
+    // applies the parser p, ignores the result, and returns x.
+    let (>>%) p x =
+        p |>> (fun _ -> x)
+
 

@@ -18,10 +18,13 @@ module CPAst =
         f h
         List.iter (fun x -> fb()
                             f x) t
-        
+    //ident = (letter | "_") {letter | "_" | digit}.
+    //letter = "A" .. "Z" | "a" .. "z" | UnicodeLetter.
+    //digit 	= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9".    
     type ident = string
     type number = int
     type character = Char
+
     type IdentType =
         | Export
         | ReadOnlyOrImplementOnly
