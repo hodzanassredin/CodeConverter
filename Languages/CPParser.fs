@@ -6,6 +6,8 @@ module CPParser =
     open CPAst    
     
 
+        
+    
     //let NIL =
     //    pstring "NIL"
     //    >>% CPAst.NIL   // map to JNull
@@ -23,14 +25,47 @@ module CPParser =
         digit <|> pchar 'A' <|> pchar 'B' <|> pchar 'C' <|> pchar 'D' <|> pchar 'E' <|> pchar 'F'
         <?> "hexDigit" 
     let ScaleFactor = 
-        pchar 'E' .>>. opt (pchar '+' <|> pchar '-') .>>. many1 digit
+        let toStr ((e,sign), scale) = 
+            match sign with
+                | Some(sign)-> sprintf "%c%c%s" e sign scale 
+                | None -> sprintf "%c%s" e scale 
+            
+        pchar 'E' .>>. opt (pchar '+' <|> pchar '-') .>>. manyChars1 digit |> mapP toStr
         <?> "ScaleFactor" 
+
+    let parseChoice2 (str:string) (tryParse: string -> (Boolean * 'a)) (tryParse2: string -> (bool * 'b)) (failStr:string) =
+        match tryParse str with
+        | true,c1 -> Choice1Of2 c1
+        | _ -> match tryParse2 str with
+               | true,c2 -> Choice2Of2 c2
+               | _ -> failwith failStr
+
     let real = 
-        many1 digit .>>. pchar '.' .>>. many digit .>>. opt ScaleFactor
+        let parseFloatChoice (str:string) = parseChoice2 str System.Single.TryParse System.Double.TryParse (sprintf "Cant parse real '%s'" str)
+        let parseFloat (((digits, dot), decs), scale) = 
+            let floatStr : string = sprintf "%s.%s%s" digits decs (match scale with | Some(scale) -> scale | None -> "")
+            parseFloatChoice floatStr
+            
+        manyChars1 digit .>>. pchar '.' .>>. manyChars digit .>>. opt ScaleFactor |> mapP parseFloat
         <?> "real" 
+
+    
     let integer = 
-        let f = digit .>>. (opt hexDigit) .>>. (pchar 'H' <|> pchar 'L' )
-        many1 digit <|> f
+        let hexDigit = digit .>>. (manyChars hexDigit) .>>. (pchar 'H' <|> pchar 'L' )
+        let parseHexDigit ((d:Char,hex: string), flag: Char) = 
+            let hexStr = string d + hex
+            if flag = 'H' then match System.Int64.TryParse hexStr with
+                                | true,long -> Choice2Of2 long
+                                | _ -> failwithf "Cant parse hex number '%s'" hexStr
+            elif flag = 'L' then 
+                match System.Int32.TryParse hexStr with
+                | true,int -> Choice1Of2 int
+                | _ -> failwithf "Cant parse hex number '%s'" hexStr
+            else failwithf "Cant parse hex number '%s'" hexStr
+        
+        let parseInt (str:string) = parseChoice2 str System.Int32.TryParse System.Int64.TryParse (sprintf "Cant parse integer '%s'" str)
+
+        (manyChars1 digit |> mapP parseInt) <|> (hexDigit  |> mapP parseHexDigit)
         <?> "integer" 
     // ======================================
     // Parsing a JBool
