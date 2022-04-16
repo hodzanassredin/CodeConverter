@@ -67,6 +67,14 @@ module CPParser =
 
         (manyChars1 digit |> mapP parseInt) <|> (hexDigit  |> mapP parseHexDigit)
         <?> "integer" 
+
+    let number = 
+        integer |> mapP Choice1Of2 <|> (real |> mapP Choice2Of2)
+        <?> "number" 
+
+    let character = 
+        digit .>>. manyChars hexDigit .>>. pchar 'X' |> mapP (fun ((d,digits), x)-> System.Convert.ToChar(System.Convert.ToUInt32(sprintf "%c%s" d digits, 16)))
+        <?> "character" 
     // ======================================
     // Parsing a JBool
     // ======================================
