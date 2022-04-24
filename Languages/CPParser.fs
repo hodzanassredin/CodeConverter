@@ -75,6 +75,16 @@ module CPParser =
     let character = 
         digit .>>. manyChars hexDigit .>>. pchar 'X' |> mapP (fun ((d,digits), x)-> System.Convert.ToChar(System.Convert.ToUInt32(sprintf "%c%s" d digits, 16)))
         <?> "character" 
+    let string  = 
+        let strBetweenChar char = pchar char >>. manyChars (notPchar char) .>> pchar char
+        strBetweenChar '\"' <|> strBetweenChar '\'' 
+        <?> "string" 
+
+    //let comment = 
+    //    let commentStart = pchar '(' .>>. pchar '*'
+    //    let commentEnd = pchar '*' .>>. pchar ')'
+    //    let between =  many (id |> mapP Some <|> ((commentStart .>>. between .>>. commentEnd)|> mapP (fun _->None)))
+    //    many (id |> mapP Some <|> ((commentStart .>>. between .>>. commentEnd)|> mapP (fun _->None)))
     // ======================================
     // Parsing a JBool
     // ======================================

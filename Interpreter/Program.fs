@@ -9,6 +9,6 @@ let from whom =
 
 [<EntryPoint>]
 let main argv =
-    let ast = 
-    printfn "Hello world %s" message
+    //let ast = 
+    //printfn "Hello world %s" message
     0 // return an integer exit code

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Parsers.fs" />
+    <Compile Include="Oberon0.fs" />
     <Compile Include="CPAst.fs" />
     <Compile Include="CPINterpreter.fs" />
     <Compile Include="CPParser.fs" />

@@ -281,6 +281,28 @@ module Parser =
         // return the inner function
         {parseFn=innerFn; label=label}
 
+    //let notP p1 =
+    //    let label = sprintf "not %s" (getLabel p1)
+    //    let innerFn input =
+    //        // run parser1 with the input
+    //        let result1 = runOnInput p1 input
+
+    //        // test the result for Failure/Success
+    //        match result1 with
+    //        | Success result ->
+    //            // if success, return the original result
+    //            Failure()
+
+    //        | Failure _ ->
+    //            // if failed, run parser2 with the input
+    //            let result2 = runOnInput p2 input
+
+    //            // return parser2's result
+    //            result2
+
+    //    // return the inner function
+    //    {parseFn=innerFn; label=label}
+
     /// Infix version of orElse
     let ( <|> ) = orElse
 
@@ -370,7 +392,12 @@ module Parser =
     /// Parses zero or more occurrences of p separated by sep
     let sepBy p sep =
         sepBy1 p sep <|> returnP []
+    let id =
+        // label is just the character
+        let label = "id"
 
+        let predicate ch = true
+        satisfy predicate label
     // =============================================
     // Standard parsers
     // =============================================
@@ -387,6 +414,15 @@ module Parser =
 
         let predicate ch = (ch = charToMatch)
         satisfy predicate label
+
+    let notPchar charToMatch =
+        // label is just the character
+        let label = sprintf "not %c" charToMatch
+
+        let predicate ch = (ch <> charToMatch)
+        satisfy predicate label
+
+    let anyPchar = satisfy (fun ch -> true) "any char"
 
     /// Choose any of a list of characters
     let anyOf listOfChars =
